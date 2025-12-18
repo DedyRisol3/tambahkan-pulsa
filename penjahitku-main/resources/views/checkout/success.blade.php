@@ -57,7 +57,11 @@
 
             {{-- Baca Flash Session dari Backend --}}
             @if (session('lastOrder'))
-                @php $orderData = session('lastOrder'); @endphp
+                @php 
+                    $orderData = session('lastOrder');
+                    $rupiahPerPoint = config('loyalty.rupiah_per_point', 5000);
+                    $estimatedPoints = floor($orderData['totalPrice'] / $rupiahPerPoint);
+                @endphp
                 <p id="thank-you-message">
                     Pesanan Anda (<strong>#{{ $orderData['orderId'] }}</strong>) telah berhasil kami terima.<br>
                     Total belanja Anda: 
@@ -65,6 +69,16 @@
                         Rp {{ number_format($orderData['totalPrice'], 0, ',', '.') }}
                     </strong>
                 </p>
+                
+                {{-- Info poin yang akan didapat --}}
+                @if($estimatedPoints > 0)
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; padding: 16px; margin: 20px 0; text-align: center;">
+                    <p style="margin: 0; font-size: 0.9rem; opacity: 0.9;">💎 Setelah pembayaran dikonfirmasi, Anda akan mendapat:</p>
+                    <p style="margin: 8px 0 0 0; font-size: 1.8rem; font-weight: bold;">+{{ $estimatedPoints }} Poin</p>
+                    <p style="margin: 4px 0 0 0; font-size: 0.8rem; opacity: 0.8;">Tukarkan poin dengan pulsa di Loyalty App!</p>
+                </div>
+                @endif
+
                 {{-- Pesan yang lebih generik --}}
                 <p style="font-size: 1rem; color: #777;">Kami sedang menunggu konfirmasi pembayaran Anda. Silakan cek email/WhatsApp Anda untuk detail selanjutnya.</p>
             @else

@@ -340,6 +340,16 @@
                             <span class="summary-item-price">{{ $pointBalance }} poin</span>
                         </div>
 
+                        {{-- Info perhitungan poin --}}
+                        <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 12px; margin: 12px 0; font-size: 0.85rem;">
+                            <p style="margin: 0; color: #0369a1;">
+                                <strong>💎 Info Poin:</strong><br>
+                                • Setiap belanja Rp {{ number_format(config('loyalty.rupiah_per_point', 5000), 0, ',', '.') }} = 1 poin<br>
+                                • 1 poin = Rp {{ number_format(config('loyalty.point_to_currency', 50), 0, ',', '.') }} diskon<br>
+                                • Poin juga bisa ditukar pulsa di Loyalty App!
+                            </p>
+                        </div>
+
                         @if ($pointBalance > 0)
                             <div class="mt-4">
                                 <label class="flex items-center space-x-2">
@@ -534,9 +544,21 @@
                             }
                         },
                         error: function(xhr, status, error) {
-                            alert("Terjadi kesalahan saat menghitung ongkir. Coba lagi.");
+                            console.error('Ongkir Error:', xhr.responseJSON || xhr.responseText);
+                            let errorMsg = "Terjadi kesalahan saat menghitung ongkir.";
+                            
+                            if (xhr.responseJSON) {
+                                if (xhr.responseJSON.message) {
+                                    errorMsg += " " + xhr.responseJSON.message;
+                                }
+                                if (xhr.responseJSON.error) {
+                                    errorMsg += " " + xhr.responseJSON.error;
+                                }
+                            }
+                            
+                            alert(errorMsg);
                             $('#results-ongkir').html(
-                                '<p class="text-center text-red-500">Terjadi kesalahan. Coba lagi.</p>'
+                                '<p class="text-center text-red-500">' + errorMsg + '</p>'
                             );
                         },
                         complete: function() {

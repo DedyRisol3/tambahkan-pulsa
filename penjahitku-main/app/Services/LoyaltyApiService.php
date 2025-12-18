@@ -19,7 +19,14 @@ class LoyaltyApiService
         }
     }
 
-    public function grantPoints($userId, $orderId)
+    /**
+     * Grant points to user after successful order
+     * 
+     * @param int $userId
+     * @param int $orderId
+     * @param float $orderTotal Total harga order untuk kalkulasi poin
+     */
+    public function grantPoints($userId, $orderId, $orderTotal = 0)
     {
         try {
             // Build URL - pastikan format benar
@@ -30,12 +37,14 @@ class LoyaltyApiService
                 'url' => $url,
                 'user_id' => $userId,
                 'order_id' => $orderId,
+                'order_total' => $orderTotal,
                 'base_url' => $this->baseUrl
             ]);
 
             $response = Http::timeout(10)->post($url, [
                 'user_id' => $userId,
-                'order_id' => $orderId
+                'order_id' => $orderId,
+                'order_total' => $orderTotal
             ]);
 
             // Log response untuk debugging

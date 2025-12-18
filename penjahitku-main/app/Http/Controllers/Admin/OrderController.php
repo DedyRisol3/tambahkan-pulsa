@@ -74,8 +74,8 @@ class OrderController extends Controller
             // Handle status "paid" - berikan poin ke user
             if ($order->status == 'paid' && $oldStatus != 'paid') {
                 try {
-                    // Kirim poin ke Loyalty Service
-                    $response = $loyalty->grantPoints($order->user_id, $order->id);
+                    // Kirim poin ke Loyalty Service (dengan total harga untuk kalkulasi poin)
+                    $response = $loyalty->grantPoints($order->user_id, $order->id, $order->total_price);
 
                     // Cek response loyalty service
                     if (($response['status'] ?? null) === 'success') {

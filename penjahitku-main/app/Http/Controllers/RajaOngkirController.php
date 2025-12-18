@@ -74,20 +74,68 @@ class RajaOngkirController extends Controller
      */
     public function checkOngkir(Request $request)
     {
-        $response = Http::asForm()->withHeaders([
-            'Accept' => 'application/json',
-            'key'    => config('rajaongkir.api_key'),
-        ])->post('https://rajaongkir.komerce.id/api/v1/calculate/domestic-cost', [
-            'origin'      => 3855,
-            'destination' => $request->input('district_id'),
-            'weight'      => $request->input('weight'),
-            'courier'     => $request->input('courier'),
-        ]);
+        try {
+            $apiKey = config('rajaongkir.api_key');
+            
+            // Cek API key
+            if (empty($apiKey)) {
+                \Log::error('RajaOngkir API Key kosong!');
+                return response()->json([
+                    'error' => 'API Key tidak dikonfigurasi',
+                    'message' => 'Silakan set RAJAONGKIR_API_KEY di file .env'
+                ], 500);
+            }
 
-        if ($response->successful()) {
-            return response()->json($response->json()['data'] ?? []);
+            $response = Http::asForm()->withHeaders([
+                'Accept' => 'application/json',
+                'key'    => $apiKey,
+            ])->post('https://rajaongkir.komerce.id/api/v1/calculate/domestic-cost', [
+                'origin'      => 3855,
+                'destination' => $request->input('district_id'),
+                'weight'      => $request->input('weight'),
+                'courier'     => $request->input('courier'),
+            ]);
+
+            // Log response untuk debugging
+            \Log::info('RajaOngkir Response', [
+                'status' => $response->status(),
+                'body' => $response->json(),
+                'request' => [
+                    'district_id' => $request->input('district_id'),
+                    'weight' => $request->input('weight'),
+                    'courier' => $request->input('courier'),
+                ]
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json()['data'] ?? [];
+                
+                // Jika data kosong, coba cek format response lain
+                if (empty($data) && isset($response->json()['rajaongkir']['results'])) {
+                    $data = $response->json()['rajaongkir']['results'];
+                }
+                
+                return response()->json($data);
+            }
+
+            // Log error
+            \Log::error('RajaOngkir Error', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+
+            return response()->json([
+                'error' => 'Gagal menghitung ongkir',
+                'status' => $response->status(),
+                'detail' => $response->json()
+            ], $response->status());
+            
+        } catch (\Exception $e) {
+            \Log::error('RajaOngkir Exception: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Terjadi kesalahan',
+                'message' => $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([], $response->status());
     }
 }
